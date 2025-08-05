@@ -3,6 +3,22 @@ package taewon_ahn;
 import java.io.*;
 import java.util.*;
 
+/**
+ * 이분 그래프(Bipartite Graph) 판별 프로그램
+ * 
+ * 이분 그래프란?
+ * - 그래프의 모든 정점을 두 개의 집합으로 나눌 수 있고,
+ * - 같은 집합에 속한 정점끼리는 서로 인접하지 않는 그래프
+ * 
+ * 알고리즘 원리:
+ * 1. DFS를 사용하여 그래프의 각 정점을 두 개의 그룹(0, 1)으로 분류
+ * 2. 연결된 정점들은 서로 다른 그룹에 속해야 함
+ * 3. 만약 인접한 두 정점이 같은 그룹에 속한다면 이분 그래프가 아님
+ * 
+ * 시간복잡도: O(V + E)
+ * 공간복잡도: O(V)
+ */
+
 public class Main_BOJ_1707 {
     static ArrayList<Integer>[] A;
     static int[] check;
