@@ -3,7 +3,7 @@ package iforcu;
 import java.util.*;
 import java.io.*;
  
-class Main_SEA_4192 {
+class Main_SEA_5987 {
     static int N, M;
     static int[] adj; 
     static long[] dp;
