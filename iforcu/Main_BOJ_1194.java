@@ -45,11 +45,7 @@ public class Main_BOJ_1194 {
 			int r = temp[0];
 			int c = temp[1];
 			int cost = temp[2];
-			int key = temp[3];	
-
-			if(map[r][c] == 1) {
-				return cost+1;
-			}
+			int key = temp[3];
 			
 			for (int i = 0; i < 4; i++) {
 	            int nr = r + dr[i];
