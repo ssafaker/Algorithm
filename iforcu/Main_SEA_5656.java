@@ -22,7 +22,7 @@ import java.util.*;
  *  - 핀볼이 부서진 후 재정렬하는 로직 구현
  */
 
-public class Main_SEA_5644 {
+public class Main_SEA_5656 {
     static int N, W, H;
     static int[][] grid;
     static int[] dr = {1, 0, -1, 0};
