@@ -1,4 +1,3 @@
-package taewon_ahn;
 
 import java.io.BufferedReader;
 import java.io.IOException;
