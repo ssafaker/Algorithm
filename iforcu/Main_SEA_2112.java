@@ -17,13 +17,12 @@ public class Main_SEA_2112 {
     static StringTokenizer st;
     static int D, W, K;
     static int[][] film;
-    static int[][] originalFilm;
     static int leastCount;
- 
+
     public static void main(String[] args) throws Exception {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         int T = Integer.parseInt(br.readLine().trim());
-         
+        
         for(int test_case = 1; test_case <= T; test_case++)
         {
             st = new StringTokenizer(br.readLine());
@@ -33,12 +32,10 @@ public class Main_SEA_2112 {
             
             // 원본 필름값과 완전 탐색을 위한 필름 배열
             film = new int[D][W];
-            originalFilm = new int[D][W];
             for (int i = 0; i < D; i++) {
                 st = new StringTokenizer(br.readLine());
                 for (int j = 0; j < W; j++) {
                     film[i][j] = Integer.parseInt(st.nextToken());
-                    originalFilm[i][j] = film[i][j];
                 }
             }
 
@@ -52,7 +49,7 @@ public class Main_SEA_2112 {
             System.out.println("#"+test_case+" "+leastCount);
         }
     }
- 
+
     static void solve(int depth, int cnt) {
         // 횟수가 최소값을 넘어가면 중단
         if(cnt >= leastCount) {
@@ -80,10 +77,10 @@ public class Main_SEA_2112 {
         solve(depth + 1, cnt + 1);
         film[depth] = temp;
     }
- 
+
     public static boolean checkPerformance() {
         if (K == 1) return true;
- 
+
         for (int j = 0; j < W; j++) {
             boolean isPass = false; // 각 열에 대한 검사
             int count = 1;
@@ -98,7 +95,7 @@ public class Main_SEA_2112 {
                     break;
                 }
             }
- 
+
             if (!isPass) return false;
         }
         return true;
