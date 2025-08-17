@@ -1,4 +1,3 @@
-package taewon_ahn;
 
 import java.io.*;
 import java.util.*;
@@ -18,8 +17,10 @@ public class Main_BOJ_10986 {
         long answer = 0;
         for (int i = 1; i <= N; i++) {
             int remainder = (int) (S[i] % M);
-            if (remainder == 0) answer++;
-            if (remainder >= 0) C[remainder]++;
+            if (remainder == 0)
+                answer++;
+            if (remainder >= 0)
+                C[remainder]++;
         }
         for (int i = 0; i < M; i++) {
             if (C[i] > 1) {
