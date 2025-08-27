@@ -1,93 +1,79 @@
-
 import java.io.*;
 import java.util.*;
 
 public class Main_BOJ_4485 {
-
-    static class Node implements Comparable<Node> {
-
-        int v;
-        int w;
-
-        public Node(int v, int w) {
-            this.v = v;
-            this.w = w;
-        }
-
-        @Override
-        public int compareTo(Node o) {
-            return this.w - o.w;
-        }
-
-    }
-
-    static int N;
-    static int[] dr = {-1, 1, 0, 0,};
-    static int[] dc = {0, 0, -1, 1};
-    static List<Node>[] A;
+    static int[][] map;
+    static int[] dr = { -1, 1, 0, 0 };
+    static int[] dc = { 0, 0, -1, 1 };
 
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        N = Integer.parseInt(br.readLine().trim());
-        int pCnt = 1;
+        StringBuilder sb = new StringBuilder();
+        int tc = 1;
 
-        while (N != 0) {
-            int[] Dist = new int[N * N];
-            Arrays.fill(Dist, Integer.MAX_VALUE);
-            A = new ArrayList[N * N];
-            for (int i = 0; i < N; i++) {
-                for (int j = 0; j < N; j++) {
-                    A[i * N + j] = new ArrayList<>();
-                }
-            }
+        while (true) {
+            int n = Integer.parseInt(br.readLine());
+            if (n == 0)
+                break;
 
-            int[][] map = new int[N][N];
-            for (int i = 0; i < N; i++) {
+            int[][] map = new int[n][n];
+            for (int i = 0; i < n; i++) {
                 StringTokenizer st = new StringTokenizer(br.readLine());
-                for (int j = 0; j < N; j++) {
+                for (int j = 0; j < n; j++) {
                     map[i][j] = Integer.parseInt(st.nextToken());
                 }
             }
-            Dist[0] = map[0][0];
 
-            for (int i = 0; i < N; i++) {
-                for (int j = 0; j < N; j++) {
-                    for (int d = 0; d < 4; d++) {
-                        int nr = i + dr[d];
-                        int nc = j + dc[d];
-                        if (check(nr, nc)) {
-                            A[i * N + j].add(new Node(nr * N + nc, map[nr][nc]));
-                        }
-                    }
-                }
-            }
-
-            PriorityQueue<Node> pq = new PriorityQueue<>();
-            pq.offer(new Node(0, map[0][0]));
-
-            while (!pq.isEmpty()) {
-                Node cur = pq.poll();
-
-                if (cur.w > Dist[cur.v]) {
-                    continue;
-                }
-
-                for (Node next : A[cur.v]) {
-                    int nextDist = next.w + Dist[cur.v];
-                    if (nextDist < Dist[next.v]) {
-                        Dist[next.v] = nextDist;
-                        pq.offer(new Node(next.v, nextDist));
-                    }
-                }
-            }
-
-            System.out.println("Problem " + pCnt + ": " + Dist[N * N - 1]);
-            pCnt++;
-            N = Integer.parseInt(br.readLine());
+            sb.append("Problem ").append(tc++).append(": ").append(dijkstra(n, map)).append("\n");
         }
+
+        System.out.println(sb);
     }
 
-    private static boolean check(int r, int c) {
-        return r >= 0 && r < N && c >= 0 && c < N;
+    private static int dijkstra(int n, int[][] map) {
+        PriorityQueue<Node> pq = new PriorityQueue<>();
+        int[][] dist = new int[n][n];
+
+        for (int i = 0; i < n; i++) {
+            Arrays.fill(dist[i], Integer.MAX_VALUE);
+        }
+        dist[0][0] = map[0][0];
+        pq.offer(new Node(0, 0, map[0][0]));
+
+        while (!pq.isEmpty()) {
+            Node cur = pq.poll();
+
+            if (cur.cost > dist[cur.x][cur.y])
+                continue;
+
+            for (int d = 0; d < 4; d++) {
+                int nr = cur.x + dr[d];
+                int nc = cur.y + dc[d];
+                if (nr < 0 || nr > n - 1 || nc < 0 || nc > n - 1)
+                    continue;
+                int newCost = cur.cost + map[nr][nc];
+                if (newCost < dist[nr][nc]) {
+                    dist[nr][nc] = newCost;
+                    pq.offer(new Node(nr, nc, newCost));
+                }
+            }
+        }
+
+        return dist[n - 1][n - 1];
+    }
+
+    static class Node implements Comparable<Node> {
+        int x, y, cost;
+
+        Node(int x, int y, int cost) {
+            this.x = x;
+            this.y = y;
+            this.cost = cost;
+        }
+
+        @Override
+        public int compareTo(Main.Node o) {
+            return this.cost - o.cost;
+        }
     }
 }
