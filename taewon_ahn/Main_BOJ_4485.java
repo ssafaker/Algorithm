@@ -72,7 +72,7 @@ public class Main_BOJ_4485 {
         }
 
         @Override
-        public int compareTo(Main.Node o) {
+        public int compareTo(Node o) {
             return this.cost - o.cost;
         }
     }
