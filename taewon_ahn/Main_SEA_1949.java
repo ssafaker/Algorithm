@@ -2,8 +2,7 @@ import java.io.*;
 import java.util.*;
 
 public class Main_SEA_1949 {
-    static int N, K, maxCnt;
-    static boolean canUseK;
+    static int N, K, maxDist;
     static int[][] map;
     static boolean[][] visited;
     static int[] dr = { -1, 1, 0, 0 };
@@ -20,85 +19,63 @@ public class Main_SEA_1949 {
 
             map = new int[N][N];
             visited = new boolean[N][N];
+            int topHeight = 0;
             for (int i = 0; i < N; i++) {
                 st = new StringTokenizer(br.readLine());
                 for (int j = 0; j < N; j++) {
                     map[i][j] = Integer.parseInt(st.nextToken());
+                    topHeight = Math.max(topHeight, map[i][j]);
                 }
             }
 
-            // 가장 높은 봉우리 찾기
-            Stack<int[]> stack = new Stack<>();
+            maxDist = 0;
             for (int i = 0; i < N; i++) {
                 for (int j = 0; j < N; j++) {
-                    int curVal = map[i][j];
-                    if (stack.size() > 0) {
-                        int topVal = stack.peek()[2];
-                        if (curVal > topVal) {
-                            // 기존 stack 모두 제거
-                            while (!stack.isEmpty()) {
-                                stack.pop();
-                            }
-                            stack.add(new int[] { i, j, curVal });
-                        } else if (curVal == topVal) {
-                            stack.add(new int[] { i, j, curVal });
-                        }
-                    } else {
-                        stack.add(new int[] { i, j, curVal });
+                    if (map[i][j] == topHeight) {
+                        resetVisited();
+                        visited[i][j] = true;
+                        dfs(i, j, K, 1);
                     }
                 }
             }
 
-            maxCnt = 0;
-            canUseK = true;
-            while (!stack.isEmpty()) {
-                int[] cur = stack.pop();
-                // System.out.println("start: " + cur[0] + "," + cur[1]);
-                dfs(cur[0], cur[1], 1);
-                // System.out.println("---------------------------");
-            }
-
-            System.out.println("#" + tc + " " + maxCnt);
+            System.out.println("#" + tc + " " + maxDist);
         }
     }
 
-    private static void dfs(int r, int c, int cnt) {
-        visited[r][c] = true;
-        int curVal = map[r][c];
-        int cantGoCnt = 0;
+    private static void resetVisited() {
+        for (boolean[] row : visited) {
+            Arrays.fill(row, false);
+        }
+    }
 
-        // System.out.println("moveto: " + r + "," + c + " cnt: " + cnt + " curVal: " +
-        // curVal);
-
+    private static void dfs(int r, int c, int k, int dist) {
         for (int d = 0; d < 4; d++) {
             int nr = r + dr[d];
             int nc = c + dc[d];
+            if (!check(nr, nc))
+                continue;
+            if (visited[nr][nc])
+                continue;
 
-            if (check(nr, nc) && !visited[nr][nc]) {
-                int nextVal = map[nr][nc];
-
-                if (nextVal < curVal) { // 다음 칸을 공사 안하는 경우
-                    dfs(nr, nc, cnt + 1);
-                } else if (canUseK && nextVal - K < curVal) { // 다음칸을 공사하는 경우
-                    int save = map[nr][nc];
-                    map[nr][nc] = curVal - 1;
-                    canUseK = false;
-                    dfs(nr, nc, cnt + 1);
-                    canUseK = true;
-                    map[nr][nc] = save;
-                } else {
-                    cantGoCnt++;
-                }
+            if (map[nr][nc] < map[r][c]) {
+                // 높이가 낮은 경우 바로 진행
+                visited[nr][nc] = true;
+                dfs(nr, nc, k, dist + 1);
+                visited[nr][nc] = false;
+            } else if (k > 0 && map[nr][nc] - k < map[r][c]) {
+                // 높이가 높거나 같고 공사가 가능한 경우
+                visited[nr][nc] = true;
+                int save = map[nr][nc];
+                map[nr][nc] = map[r][c] - 1;
+                dfs(nr, nc, 0, dist + 1);
+                map[nr][nc] = save;
+                visited[nr][nc] = false;
             } else {
-                cantGoCnt++;
+                // 공사 불가 -> 최대값 계속 업데이트
+                maxDist = Math.max(dist, maxDist);
             }
         }
-
-        if (cantGoCnt >= 4 && cnt > maxCnt) {
-            maxCnt = cnt;
-        }
-
-        visited[r][c] = false;
     }
 
     private static boolean check(int r, int c) {
