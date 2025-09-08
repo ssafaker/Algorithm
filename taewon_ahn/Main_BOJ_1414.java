@@ -29,7 +29,7 @@ public class Main_BOJ_1414 {
 			}
 		}
 
-		// 프림 알고리즘을 최소 신장 트리 구하기
+		// 프림 알고리즘으로 최소 신장 트리 구하기
 		boolean[] visited = new boolean[N + 1];
 		PriorityQueue<Node> pq = new PriorityQueue<>();
 
