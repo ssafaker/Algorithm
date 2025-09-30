@@ -15,7 +15,7 @@ import java.util.*;
  *    - 맨 앞이 "0"이면 전체가 0이므로 "0" 반환
  */
 
-public class Main_BOJ_가장큰수 {
+public class Main_PGS_가장큰수 {
     // numbers 배열을 이어붙여 만들 수 있는 가장 큰 수를 반환
     public String solution(int[] numbers) {
         String[] arr = new String[numbers.length];
