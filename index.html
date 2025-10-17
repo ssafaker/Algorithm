@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Algorithm Journey Map</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow: auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .legend {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            margin: 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-line {
+            width: 40px;
+            height: 3px;
+        }
+
+        .legend-line.prerequisite { background: #4CAF50; }
+        .legend-line.extension { background: #FF9800; }
+        .legend-line.related { background: #2196F3; }
+        .legend-line.optimization { background: #E91E63; }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            margin: 20px;
+            border-radius: 10px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .controls button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+
+        .controls button:hover {
+            background: #764ba2;
+        }
+
+        .controls button.active {
+            background: #764ba2;
+        }
+
+        .canvas-container {
+            position: relative;
+            margin: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            overflow: auto;
+            max-height: 1400px;
+        }
+
+        #canvas {
+            display: block;
+            cursor: default;
+        }
+
+        .node {
+            position: absolute;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .node:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            border-color: #667eea;
+            z-index: 10;
+        }
+
+        .node.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #764ba2;
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .node.algorithm {
+            border-left: 5px solid #667eea;
+        }
+
+        .node.math {
+            border-left: 5px solid #f5576c;
+        }
+
+        .node.geometry {
+            border-left: 5px solid #00f2fe;
+        }
+
+        .node-name {
+            font-weight: 700;
+            font-size: 0.95em;
+            margin-bottom: 5px;
+        }
+
+        .node-tier {
+            font-size: 0.75em;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .node.selected .node-tier {
+            opacity: 0.9;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .modal-title {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .modal-description {
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        .modal-section {
+            margin: 20px 0;
+        }
+
+        .modal-section h3 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #764ba2;
+        }
+
+        .problem-list {
+            list-style: none;
+        }
+
+        .problem-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .problem-item:hover {
+            background: #e9ecef;
+        }
+
+        .problem-item a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .problem-item a:hover {
+            text-decoration: underline;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: #e9ecef;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            color: #495057;
+        }
+
+        .relation-list {
+            list-style: none;
+        }
+
+        .relation-item {
+            padding: 8px;
+            margin: 5px 0;
+            border-left: 3px solid #667eea;
+            padding-left: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🗺️ The Algorithm Journey Map</h1>
+        <p>BOJ 태그 기반 알고리즘 학습 로드맵 - 시각적 연결 관계</p>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-line prerequisite"></div>
+            <span>선행 관계 (→)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-line extension"></div>
+            <span>확장 관계 (⇢)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-line related"></div>
+            <span>연관 관계 (🔗)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-line optimization"></div>
+            <span>최적화 (⚡)</span>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="showAllStreams()" class="active" id="btnAll">전체 보기</button>
+        <button onclick="showStream('algorithm')" id="btnAlgorithm">자료구조와 알고리즘</button>
+        <button onclick="showStream('math')" id="btnMath">수학</button>
+        <button onclick="showStream('geometry')" id="btnGeometry">계산 기하</button>
+        <button onclick="resetToTierLayout()">Tier별 정렬</button>
+        <button onclick="startForceLayout()" id="btnForceLayout">자동 배치 시작</button>
+        <button onclick="exportLayout()">배치 저장</button>
+        <button onclick="importLayout()">배치 로드</button>
+        <button onclick="resetView()">선택 초기화</button>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <h2 class="modal-title" id="modalTitle"></h2>
+            <div class="modal-description" id="modalDescription"></div>
+            <div class="modal-section">
+                <h3>🏷️ 관련 태그</h3>
+                <div class="tag-list" id="modalTags"></div>
+            </div>
+            <div class="modal-section">
+                <h3>📚 추천 문제</h3>
+                <ul class="problem-list" id="modalProblems"></ul>
+            </div>
+            <div class="modal-section" id="relationsSection">
+                <h3>🔗 연관 관계</h3>
+                <ul class="relation-list" id="modalRelations"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const algorithmData = [
+            // Tier 1 - Algorithm Stream
+            { id: "array_list", name: "배열, 연결 리스트", tier: 1, stream: "algorithm", x: 1120.5217757590472, y: 289,
+                tags: ["data_structures"], description: "프로그래밍의 가장 기본이 되는 자료구조입니다.",
+                problems: [{ name: "BOJ 10818: 최소, 최대", url: "https://www.acmicpc.net/problem/10818" }], relations: [] },
+            
+            { id: "stack_queue", name: "스택, 큐, 덱", tier: 1, stream: "algorithm", x: 542.1365655571078, y: 159.1076625255298,
+                tags: ["stack", "queue"], description: "LIFO와 FIFO 구조의 기본 자료구조입니다.",
+                problems: [{ name: "BOJ 10828: 스택", url: "https://www.acmicpc.net/problem/10828" }], relations: [] },
+            
+            { id: "hash_set", name: "해시 테이블", tier: 1, stream: "algorithm", x: 500, y: 100,
+                tags: ["hashing"], description: "O(1) 시간에 데이터를 저장하고 검색합니다.",
+                problems: [{ name: "BOJ 1620: 나는야 포켓몬 마스터", url: "https://www.acmicpc.net/problem/1620" }], relations: [] },
+            
+            { id: "sorting", name: "정렬", tier: 1, stream: "algorithm", x: 700, y: 100,
+                tags: ["sorting"], description: "데이터를 특정 순서로 배열하는 기본 알고리즘입니다.",
+                problems: [{ name: "BOJ 2750: 수 정렬하기", url: "https://www.acmicpc.net/problem/2750" }], relations: [] },
+            
+            { id: "recursion", name: "재귀", tier: 1, stream: "algorithm", x: 900, y: 100,
+                tags: ["recursion"], description: "함수가 자기 자신을 호출하는 프로그래밍 기법입니다.",
+                problems: [{ name: "BOJ 10872: 팩토리얼", url: "https://www.acmicpc.net/problem/10872" }], relations: [] },
+            
+            { id: "bruteforce", name: "완전 탐색", tier: 1, stream: "algorithm", x: 1100, y: 100,
+                tags: ["bruteforcing"], description: "가능한 모든 경우의 수를 탐색합니다.",
+                problems: [{ name: "BOJ 2798: 블랙잭", url: "https://www.acmicpc.net/problem/2798" }], relations: [] },
+
+            // Tier 2 - Algorithm Stream
+            { id: "binary_search", name: "이진 탐색", tier: 2, stream: "algorithm", x: 700, y: 250,
+                tags: ["binary_search"], description: "정렬된 배열에서 O(log N)에 탐색합니다.",
+                problems: [{ name: "BOJ 1920: 수 찾기", url: "https://www.acmicpc.net/problem/1920" }],
+                relations: [{ target: "sorting", type: "prerequisite" }] },
+            
+            { id: "two_pointer", name: "투 포인터", tier: 2, stream: "algorithm", x: 200, y: 250,
+                tags: ["two_pointer"], description: "두 개의 포인터로 효율적 탐색을 수행합니다.",
+                problems: [{ name: "BOJ 2003: 수들의 합 2", url: "https://www.acmicpc.net/problem/2003" }],
+                relations: [{ target: "array_list", type: "prerequisite" }] },
+            
+            { id: "prefix_sum", name: "누적 합", tier: 2, stream: "algorithm", x: 400, y: 250,
+                tags: ["prefix_sum"], description: "구간 합을 O(1)에 구합니다.",
+                problems: [{ name: "BOJ 11659: 구간 합 구하기 4", url: "https://www.acmicpc.net/problem/11659" }],
+                relations: [{ target: "array_list", type: "prerequisite" }] },
+            
+            { id: "greedy", name: "그리디", tier: 2, stream: "algorithm", x: 500, y: 250,
+                tags: ["greedy"], description: "매 순간 최선의 선택을 합니다.",
+                problems: [{ name: "BOJ 11047: 동전 0", url: "https://www.acmicpc.net/problem/11047" }],
+                relations: [{ target: "sorting", type: "related" }] },
+            
+            { id: "priority_queue", name: "우선순위 큐", tier: 2, stream: "algorithm", x: 900, y: 250,
+                tags: ["heap"], description: "최댓값/최솟값을 O(log N)에 추출합니다.",
+                problems: [{ name: "BOJ 1927: 최소 힙", url: "https://www.acmicpc.net/problem/1927" }],
+                relations: [{ target: "array_list", type: "prerequisite" }] },
+            
+            { id: "graph_basic", name: "그래프 기본", tier: 2, stream: "algorithm", x: 1100, y: 250,
+                tags: ["graph"], description: "그래프의 기본 개념과 표현 방법입니다.",
+                problems: [{ name: "BOJ 1260: DFS와 BFS", url: "https://www.acmicpc.net/problem/1260" }],
+                relations: [{ target: "array_list", type: "prerequisite" }] },
+            
+            { id: "backtracking", name: "백트래킹", tier: 2, stream: "algorithm", x: 1000, y: 250,
+                tags: ["backtracking"], description: "조건을 위배하면 이전으로 돌아가는 탐색 기법입니다.",
+                problems: [{ name: "BOJ 15649: N과 M (1)", url: "https://www.acmicpc.net/problem/15649" }],
+                relations: [{ target: "bruteforce", type: "extension" }, { target: "recursion", type: "prerequisite" }] },
+
+            // Tier 3 - Algorithm Stream
+            { id: "dfs_bfs", name: "DFS, BFS", tier: 3, stream: "algorithm", x: 1100, y: 400,
+                tags: ["dfs", "bfs"], description: "그래프 탐색의 두 가지 대표적인 방법입니다.",
+                problems: [{ name: "BOJ 1260: DFS와 BFS", url: "https://www.acmicpc.net/problem/1260" }],
+                relations: [{ target: "graph_basic", type: "prerequisite" }, { target: "stack_queue", type: "prerequisite" }] },
+            
+            { id: "dijkstra", name: "다익스트라", tier: 3, stream: "algorithm", x: 900, y: 400,
+                tags: ["dijkstra"], description: "최단 경로를 구하는 알고리즘입니다.",
+                problems: [{ name: "BOJ 1753: 최단경로", url: "https://www.acmicpc.net/problem/1753" }],
+                relations: [{ target: "graph_basic", type: "prerequisite" }, { target: "priority_queue", type: "prerequisite" }] },
+            
+            { id: "dp_basic", name: "동적 계획법", tier: 3, stream: "algorithm", x: 700, y: 400,
+                tags: ["dp"], description: "부분 문제의 결과를 저장하여 재사용합니다.",
+                problems: [{ name: "BOJ 1463: 1로 만들기", url: "https://www.acmicpc.net/problem/1463" }],
+                relations: [{ target: "recursion", type: "prerequisite" }] },
+            
+            { id: "divide_conquer", name: "분할 정복", tier: 3, stream: "algorithm", x: 500, y: 400,
+                tags: ["divide_and_conquer"], description: "문제를 작게 나누어 해결합니다.",
+                problems: [{ name: "BOJ 2740: 행렬 곱셈", url: "https://www.acmicpc.net/problem/2740" }],
+                relations: [{ target: "recursion", type: "prerequisite" }] },
+            
+            { id: "union_find", name: "Union-Find", tier: 3, stream: "algorithm", x: 300, y: 400,
+                tags: ["disjoint_set"], description: "서로소 집합을 효율적으로 관리합니다.",
+                problems: [{ name: "BOJ 1717: 집합의 표현", url: "https://www.acmicpc.net/problem/1717" }],
+                relations: [{ target: "array_list", type: "prerequisite" }] },
+            
+            { id: "meet_in_the_middle", name: "중간에서 만나기", tier: 3, stream: "algorithm", x: 100, y: 400,
+                tags: ["meet_in_the_middle"], description: "2^N 탐색을 2^(N/2) 두 번으로 최적화합니다.",
+                problems: [{ name: "BOJ 1208: 부분수열의 합 2", url: "https://www.acmicpc.net/problem/1208" }],
+                relations: [{ target: "bruteforce", type: "optimization" }] },
+
+            // Tier 4 - Algorithm Stream
+            { id: "segment_tree", name: "세그먼트 트리", tier: 4, stream: "algorithm", x: 400, y: 550,
+                tags: ["segment_tree"], description: "구간 쿼리를 O(log N)에 처리합니다.",
+                problems: [{ name: "BOJ 2042: 구간 합 구하기", url: "https://www.acmicpc.net/problem/2042" }],
+                relations: [{ target: "recursion", type: "prerequisite" }, { target: "divide_conquer", type: "related" }] },
+            
+            { id: "trie", name: "트라이", tier: 4, stream: "algorithm", x: 200, y: 550,
+                tags: ["trie"], description: "문자열 집합을 효율적으로 저장합니다.",
+                problems: [{ name: "BOJ 5052: 전화번호 목록", url: "https://www.acmicpc.net/problem/5052" }],
+                relations: [{ target: "recursion", type: "prerequisite" }] },
+            
+            { id: "topological_sort", name: "위상 정렬", tier: 4, stream: "algorithm", x: 1100, y: 550,
+                tags: ["topological_sorting"], description: "방향 그래프의 정점을 순서대로 나열합니다.",
+                problems: [{ name: "BOJ 2252: 줄 세우기", url: "https://www.acmicpc.net/problem/2252" }],
+                relations: [{ target: "dfs_bfs", type: "prerequisite" }] },
+            
+            { id: "mst", name: "최소 신장 트리", tier: 4, stream: "algorithm", x: 300, y: 550,
+                tags: ["mst"], description: "모든 정점을 최소 비용으로 연결합니다.",
+                problems: [{ name: "BOJ 1197: 최소 스패닝 트리", url: "https://www.acmicpc.net/problem/1197" }],
+                relations: [{ target: "union_find", type: "prerequisite" }, { target: "graph_basic", type: "prerequisite" }] },
+            
+            { id: "lca", name: "최소 공통 조상", tier: 4, stream: "algorithm", x: 900, y: 550,
+                tags: ["lca"], description: "트리에서 두 노드의 공통 조상을 찾습니다.",
+                problems: [{ name: "BOJ 11437: LCA", url: "https://www.acmicpc.net/problem/11437" }],
+                relations: [{ target: "dfs_bfs", type: "prerequisite" }] },
+            
+            { id: "scc", name: "강한 연결 요소", tier: 4, stream: "algorithm", x: 1000, y: 550,
+                tags: ["scc"], description: "방향 그래프에서 강하게 연결된 정점 집합을 찾습니다.",
+                problems: [{ name: "BOJ 2150: SCC", url: "https://www.acmicpc.net/problem/2150" }],
+                relations: [{ target: "dfs_bfs", type: "prerequisite" }] },
+            
+            { id: "kmp", name: "KMP", tier: 4, stream: "algorithm", x: 600, y: 550,
+                tags: ["kmp"], description: "O(N+M)에 패턴 매칭을 수행합니다.",
+                problems: [{ name: "BOJ 1786: 찾기", url: "https://www.acmicpc.net/problem/1786" }],
+                relations: [{ target: "array_list", type: "prerequisite" }] },
+            
+            { id: "bitmask_dp", name: "비트마스크 DP", tier: 4, stream: "algorithm", x: 700, y: 550,
+                tags: ["bitmask", "dp"], description: "비트 연산으로 집합 상태를 표현합니다.",
+                problems: [{ name: "BOJ 1014: 컨닝", url: "https://www.acmicpc.net/problem/1014" }],
+                relations: [{ target: "dp_basic", type: "prerequisite" }] },
+
+            // Tier 5 - Algorithm Stream
+            { id: "lazy_propagation", name: "Lazy Propagation", tier: 5, stream: "algorithm", x: 400, y: 700,
+                tags: ["lazy_propagation"], description: "구간 업데이트를 효율적으로 처리합니다.",
+                problems: [{ name: "BOJ 10999: 구간 합 구하기 2", url: "https://www.acmicpc.net/problem/10999" }],
+                relations: [{ target: "segment_tree", type: "extension" }] },
+            
+            { id: "mos_algorithm", name: "Mo's Algorithm", tier: 5, stream: "algorithm", x: 600, y: 700,
+                tags: ["mos"], description: "오프라인 쿼리를 효율적으로 처리합니다.",
+                problems: [{ name: "BOJ 13545: 수열과 쿼리 0", url: "https://www.acmicpc.net/problem/13545" }],
+                relations: [{ target: "segment_tree", type: "related" }] },
+            
+            { id: "max_flow", name: "최대 유량", tier: 5, stream: "algorithm", x: 1000, y: 700,
+                tags: ["max_flow"], description: "네트워크의 최대 유량을 구합니다.",
+                problems: [{ name: "BOJ 6086: 최대 유량", url: "https://www.acmicpc.net/problem/6086" }],
+                relations: [{ target: "dfs_bfs", type: "prerequisite" }] },
+            
+            { id: "aho_corasick", name: "아호-코라식", tier: 5, stream: "algorithm", x: 200, y: 700,
+                tags: ["aho_corasick"], description: "여러 패턴을 동시에 검색합니다.",
+                problems: [{ name: "BOJ 9250: 문자열 집합 판별", url: "https://www.acmicpc.net/problem/9250" }],
+                relations: [{ target: "trie", type: "extension" }, { target: "kmp", type: "related" }] },
+            
+            { id: "convex_hull_trick", name: "컨벡스 헐 트릭", tier: 5, stream: "algorithm", x: 700, y: 700,
+                tags: ["convex_hull_trick"], description: "DP 최적화 기법입니다.",
+                problems: [{ name: "BOJ 12795: 반평면 땅따먹기", url: "https://www.acmicpc.net/problem/12795" }],
+                relations: [{ target: "dp_basic", type: "optimization" }] },
+
+            // Math Stream
+            { id: "gcd_lcm", name: "최대공약수/최소공배수", tier: 1, stream: "math", x: 1400, y: 100,
+                tags: ["math", "euclidean"], description: "유클리드 호제법으로 GCD/LCM을 구합니다.",
+                problems: [{ name: "BOJ 2609: 최대공약수와 최소공배수", url: "https://www.acmicpc.net/problem/2609" }],
+                relations: [] },
+            
+            { id: "prime_sieve", name: "소수 판별", tier: 1, stream: "math", x: 1600, y: 100,
+                tags: ["primality_test"], description: "에라토스테네스의 체로 소수를 찾습니다.",
+                problems: [{ name: "BOJ 1929: 소수 구하기", url: "https://www.acmicpc.net/problem/1929" }],
+                relations: [] },
+            
+            { id: "modular_arithmetic", name: "모듈러 연산", tier: 2, stream: "math", x: 1400, y: 250,
+                tags: ["modular"], description: "큰 수의 나머지 연산을 수행합니다.",
+                problems: [{ name: "BOJ 10869: 사칙연산", url: "https://www.acmicpc.net/problem/10869" }],
+                relations: [] },
+            
+            { id: "combinatorics", name: "순열과 조합", tier: 2, stream: "math", x: 1600, y: 250,
+                tags: ["combinatorics"], description: "경우의 수를 계산합니다.",
+                problems: [{ name: "BOJ 15439: 베라의 패션", url: "https://www.acmicpc.net/problem/15439" }],
+                relations: [{ target: "modular_arithmetic", type: "related" }] },
+            
+            { id: "extended_euclidean", name: "확장 유클리드", tier: 3, stream: "math", x: 1400, y: 400,
+                tags: ["extended_euclidean"], description: "모듈러 곱셈 역원을 구합니다.",
+                problems: [{ name: "BOJ 14565: 역원 구하기", url: "https://www.acmicpc.net/problem/14565" }],
+                relations: [{ target: "gcd_lcm", type: "extension" }] },
+            
+            { id: "chinese_remainder", name: "중국인의 나머지 정리", tier: 3, stream: "math", x: 1600, y: 400,
+                tags: ["crt"], description: "여러 합동식의 해를 구합니다.",
+                problems: [{ name: "BOJ 6064: 카잉 달력", url: "https://www.acmicpc.net/problem/6064" }],
+                relations: [{ target: "gcd_lcm", type: "prerequisite" }] },
+            
+            { id: "euler_phi", name: "오일러 피 함수", tier: 4, stream: "math", x: 1600, y: 550,
+                tags: ["euler_phi"], description: "서로소 개수를 구합니다.",
+                problems: [{ name: "BOJ 11689: GCD(n, k) = 1", url: "https://www.acmicpc.net/problem/11689" }],
+                relations: [{ target: "prime_sieve", type: "prerequisite" }] },
+            
+            { id: "inclusion_exclusion", name: "포함-배제 원리", tier: 4, stream: "math", x: 1400, y: 550,
+                tags: ["inclusion_exclusion"], description: "집합의 합집합 크기를 구합니다.",
+                problems: [{ name: "BOJ 1557: 제곱 ㄴㄴ", url: "https://www.acmicpc.net/problem/1557" }],
+                relations: [{ target: "combinatorics", type: "related" }] },
+            
+            { id: "fft", name: "FFT", tier: 5, stream: "math", x: 1400, y: 700,
+                tags: ["fft"], description: "다항식 곱셈을 O(N log N)에 수행합니다.",
+                problems: [{ name: "BOJ 1067: 이동", url: "https://www.acmicpc.net/problem/1067" }],
+                relations: [{ target: "divide_conquer", type: "related" }] },
+            
+            { id: "miller_rabin", name: "밀러-라빈", tier: 5, stream: "math", x: 1600, y: 700,
+                tags: ["miller_rabin"], description: "큰 수의 소수 판별을 수행합니다.",
+                problems: [{ name: "BOJ 5615: 아파트 임대", url: "https://www.acmicpc.net/problem/5615" }],
+                relations: [{ target: "prime_sieve", type: "extension" }] },
+
+            // Geometry Stream
+            { id: "geometry_basics", name: "점, 선, 벡터", tier: 3, stream: "geometry", x: 1900, y: 400,
+                tags: ["geometry"], description: "계산 기하의 기본 개념입니다.",
+                problems: [{ name: "BOJ 1002: 터렛", url: "https://www.acmicpc.net/problem/1002" }],
+                relations: [] },
+            
+            { id: "ccw", name: "CCW", tier: 3, stream: "geometry", x: 2100, y: 400,
+                tags: ["ccw"], description: "세 점의 방향 관계를 판별합니다.",
+                problems: [{ name: "BOJ 11758: CCW", url: "https://www.acmicpc.net/problem/11758" }],
+                relations: [{ target: "geometry_basics", type: "prerequisite" }] },
+            
+            { id: "line_intersection", name: "선분 교차 판정", tier: 4, stream: "geometry", x: 2100, y: 550,
+                tags: ["line_intersection"], description: "두 선분의 교차를 판별합니다.",
+                problems: [{ name: "BOJ 17387: 선분 교차 2", url: "https://www.acmicpc.net/problem/17387" }],
+                relations: [{ target: "ccw", type: "prerequisite" }] },
+            
+            { id: "convex_hull", name: "컨벡스 헐", tier: 4, stream: "geometry", x: 1900, y: 550,
+                tags: ["convex_hull"], description: "볼록 껍질을 구합니다.",
+                problems: [{ name: "BOJ 1708: 볼록 껍질", url: "https://www.acmicpc.net/problem/1708" }],
+                relations: [{ target: "ccw", type: "prerequisite" }, { target: "sorting", type: "prerequisite" }] },
+            
+            { id: "rotating_calipers", name: "회전하는 캘리퍼스", tier: 5, stream: "geometry", x: 1900, y: 700,
+                tags: ["rotating_calipers"], description: "볼록 다각형에서 최원점쌍을 찾습니다.",
+                problems: [{ name: "BOJ 10254: 고속도로", url: "https://www.acmicpc.net/problem/10254" }],
+                relations: [{ target: "convex_hull", type: "extension" }] },
+
+            // 추가 Tier 1 알고리즘들
+            { id: "implementation", name: "구현", tier: 1, stream: "algorithm", x: 150, y: 100,
+                tags: ["implementation"], description: "문제의 요구사항을 코드로 구현합니다.",
+                problems: [{ name: "BOJ 2753: 윤년", url: "https://www.acmicpc.net/problem/2753" }], relations: [] },
+            
+            { id: "arithmetic", name: "사칙연산", tier: 1, stream: "math", x: 1500, y: 100,
+                tags: ["arithmetic"], description: "기본적인 덧셈, 뺄셈, 곱셈, 나눗셈 연산입니다.",
+                problems: [{ name: "BOJ 1000: A+B", url: "https://www.acmicpc.net/problem/1000" }], relations: [] },
+
+            // 추가 Tier 2 알고리즘들
+            { id: "simulation", name: "시뮬레이션", tier: 2, stream: "algorithm", x: 100, y: 250,
+                tags: ["simulation"], description: "주어진 조건에 따라 상황을 시뮬레이션합니다.",
+                problems: [{ name: "BOJ 14503: 로봇 청소기", url: "https://www.acmicpc.net/problem/14503" }],
+                relations: [{ target: "implementation", type: "prerequisite" }] },
+            
+            { id: "sliding_window", name: "슬라이딩 윈도우", tier: 2, stream: "algorithm", x: 300, y: 250,
+                tags: ["sliding_window"], description: "고정된 크기의 윈도우를 이동하며 탐색합니다.",
+                problems: [{ name: "BOJ 12891: DNA 비밀번호", url: "https://www.acmicpc.net/problem/12891" }],
+                relations: [{ target: "two_pointer", type: "related" }] },
+            
+            { id: "parametric_search", name: "매개 변수 탐색", tier: 2, stream: "algorithm", x: 800, y: 250,
+                tags: ["parametric_search"], description: "최적화 문제를 결정 문제로 바꿔 이분탐색합니다.",
+                problems: [{ name: "BOJ 1654: 랜선 자르기", url: "https://www.acmicpc.net/problem/1654" }],
+                relations: [{ target: "binary_search", type: "extension" }] },
+            
+            { id: "linked_list", name: "연결 리스트", tier: 2, stream: "algorithm", x: 600, y: 250,
+                tags: ["linked_list"], description: "노드들이 포인터로 연결된 자료구조입니다.",
+                problems: [{ name: "BOJ 1406: 에디터", url: "https://www.acmicpc.net/problem/1406" }],
+                relations: [{ target: "array_list", type: "related" }] },
+
+            // 추가 Tier 3 알고리즘들
+            { id: "floyd_warshall", name: "플로이드-워셜", tier: 3, stream: "algorithm", x: 1000, y: 400,
+                tags: ["floyd_warshall"], description: "모든 쌍의 최단 경로를 O(N³)에 구합니다.",
+                problems: [{ name: "BOJ 11404: 플로이드", url: "https://www.acmicpc.net/problem/11404" }],
+                relations: [{ target: "graph_basic", type: "prerequisite" }] },
+            
+            { id: "bellman_ford", name: "벨만-포드", tier: 3, stream: "algorithm", x: 800, y: 400,
+                tags: ["bellman_ford"], description: "음수 가중치가 있어도 최단 경로를 구합니다.",
+                problems: [{ name: "BOJ 11657: 타임머신", url: "https://www.acmicpc.net/problem/11657" }],
+                relations: [{ target: "dijkstra", type: "related" }] },
+            
+            { id: "knapsack", name: "배낭 문제", tier: 3, stream: "algorithm", x: 600, y: 400,
+                tags: ["knapsack"], description: "한정된 용량에 최대 가치를 담는 문제입니다.",
+                problems: [{ name: "BOJ 12865: 평범한 배낭", url: "https://www.acmicpc.net/problem/12865" }],
+                relations: [{ target: "dp_basic", type: "extension" }] },
+            
+            { id: "lis", name: "LIS (최장 증가 부분 수열)", tier: 3, stream: "algorithm", x: 400, y: 400,
+                tags: ["lis"], description: "가장 긴 증가하는 부분 수열을 찾습니다.",
+                problems: [{ name: "BOJ 11053: 가장 긴 증가하는 부분 수열", url: "https://www.acmicpc.net/problem/11053" }],
+                relations: [{ target: "dp_basic", type: "extension" }, { target: "binary_search", type: "optimization" }] },
+            
+            { id: "dag", name: "DAG (방향 비순환 그래프)", tier: 3, stream: "algorithm", x: 1200, y: 400,
+                tags: ["dag"], description: "사이클이 없는 방향 그래프입니다.",
+                problems: [{ name: "BOJ 2623: 음악프로그램", url: "https://www.acmicpc.net/problem/2623" }],
+                relations: [{ target: "graph_basic", type: "prerequisite" }] },
+
+            // 추가 Tier 4 알고리즘들
+            { id: "fenwick_tree", name: "펜윅 트리 (BIT)", tier: 4, stream: "algorithm", x: 500, y: 550,
+                tags: ["fenwick"], description: "구간 합을 효율적으로 처리하는 트리입니다.",
+                problems: [{ name: "BOJ 2042: 구간 합 구하기", url: "https://www.acmicpc.net/problem/2042" }],
+                relations: [{ target: "segment_tree", type: "related" }] },
+            
+            { id: "sqrt_decomposition", name: "제곱근 분할법", tier: 4, stream: "algorithm", x: 100, y: 550,
+                tags: ["sqrt_decomposition"], description: "배열을 √N 크기의 블록으로 나누어 처리합니다.",
+                problems: [{ name: "BOJ 13547: 수열과 쿼리 5", url: "https://www.acmicpc.net/problem/13547" }],
+                relations: [{ target: "array_list", type: "prerequisite" }] },
+            
+            { id: "bipartite_matching", name: "이분 매칭", tier: 4, stream: "algorithm", x: 1200, y: 550,
+                tags: ["bipartite_matching"], description: "이분 그래프에서 최대 매칭을 찾습니다.",
+                problems: [{ name: "BOJ 11375: 열혈강호", url: "https://www.acmicpc.net/problem/11375" }],
+                relations: [{ target: "dfs_bfs", type: "prerequisite" }] },
+            
+            { id: "two_sat", name: "2-SAT", tier: 4, stream: "algorithm", x: 1300, y: 550,
+                tags: ["2sat"], description: "논리식의 만족 가능성을 판별합니다.",
+                problems: [{ name: "BOJ 11280: 2-SAT - 3", url: "https://www.acmicpc.net/problem/11280" }],
+                relations: [{ target: "scc", type: "prerequisite" }] },
+            
+            { id: "tree_dp", name: "트리 DP", tier: 4, stream: "algorithm", x: 800, y: 550,
+                tags: ["tree_dp"], description: "트리 구조에서 동적 계획법을 적용합니다.",
+                problems: [{ name: "BOJ 2213: 트리의 독립집합", url: "https://www.acmicpc.net/problem/2213" }],
+                relations: [{ target: "dp_basic", type: "prerequisite" }, { target: "dfs_bfs", type: "prerequisite" }] },
+            
+            { id: "sparse_table", name: "희소 배열", tier: 4, stream: "algorithm", x: 1400, y: 550,
+                tags: ["sparse_table"], description: "RMQ를 O(1)에 처리하는 자료구조입니다.",
+                problems: [{ name: "BOJ 17435: 합성함수와 쿼리", url: "https://www.acmicpc.net/problem/17435" }],
+                relations: [{ target: "segment_tree", type: "related" }] },
+            
+            { id: "articulation", name: "단절점과 단절선", tier: 4, stream: "algorithm", x: 1500, y: 550,
+                tags: ["articulation"], description: "그래프에서 단절점과 단절선을 찾습니다.",
+                problems: [{ name: "BOJ 11266: 단절점", url: "https://www.acmicpc.net/problem/11266" }],
+                relations: [{ target: "dfs_bfs", type: "prerequisite" }] },
+
+            // 추가 Tier 5 알고리즘들
+            { id: "mcmf", name: "최소 비용 최대 유량", tier: 5, stream: "algorithm", x: 1100, y: 700,
+                tags: ["mcmf"], description: "최대 유량을 최소 비용으로 흘립니다.",
+                problems: [{ name: "BOJ 11408: 열혈강호 5", url: "https://www.acmicpc.net/problem/11408" }],
+                relations: [{ target: "max_flow", type: "extension" }] },
+            
+            { id: "suffix_array", name: "접미사 배열", tier: 5, stream: "algorithm", x: 100, y: 700,
+                tags: ["suffix_array"], description: "문자열의 모든 접미사를 정렬합니다.",
+                problems: [{ name: "BOJ 9248: Suffix Array", url: "https://www.acmicpc.net/problem/9248" }],
+                relations: [{ target: "sorting", type: "prerequisite" }] },
+            
+            { id: "hld", name: "Heavy-Light 분할", tier: 5, stream: "algorithm", x: 800, y: 700,
+                tags: ["hld"], description: "트리를 경로로 분해하여 쿼리를 처리합니다.",
+                problems: [{ name: "BOJ 13510: 트리와 쿼리 1", url: "https://www.acmicpc.net/problem/13510" }],
+                relations: [{ target: "segment_tree", type: "prerequisite" }, { target: "lca", type: "prerequisite" }] },
+            
+            { id: "persistent_seg", name: "퍼시스턴트 세그먼트 트리", tier: 5, stream: "algorithm", x: 500, y: 700,
+                tags: ["persistent"], description: "과거 상태를 유지하는 세그먼트 트리입니다.",
+                problems: [{ name: "BOJ 11012: Egg", url: "https://www.acmicpc.net/problem/11012" }],
+                relations: [{ target: "segment_tree", type: "extension" }] },
+            
+            { id: "splay_tree", name: "스플레이 트리", tier: 5, stream: "algorithm", x: 300, y: 700,
+                tags: ["splay"], description: "자가 균형 이진 탐색 트리입니다.",
+                problems: [{ name: "BOJ 13159: 배열", url: "https://www.acmicpc.net/problem/13159" }],
+                relations: [{ target: "segment_tree", type: "related" }] },
+            
+            { id: "parallel_binary_search", name: "병렬 이분 탐색", tier: 5, stream: "algorithm", x: 900, y: 700,
+                tags: ["parallel_bs"], description: "여러 쿼리를 동시에 이분 탐색합니다.",
+                problems: [{ name: "BOJ 12899: 데이터 구조", url: "https://www.acmicpc.net/problem/12899" }],
+                relations: [{ target: "binary_search", type: "extension" }] },
+            
+            { id: "manacher", name: "매내처", tier: 5, stream: "algorithm", x: 1200, y: 700,
+                tags: ["manacher"], description: "O(N)에 모든 팰린드롬을 찾습니다.",
+                problems: [{ name: "BOJ 13275: 가장 긴 팰린드롬 부분 문자열", url: "https://www.acmicpc.net/problem/13275" }],
+                relations: [{ target: "kmp", type: "related" }] },
+            
+            { id: "dnc_optimization", name: "분할 정복 최적화", tier: 5, stream: "algorithm", x: 1300, y: 700,
+                tags: ["dnc_opt"], description: "DP 점화식을 O(N log N)으로 최적화합니다.",
+                problems: [{ name: "BOJ 13261: 탈옥", url: "https://www.acmicpc.net/problem/13261" }],
+                relations: [{ target: "dp_basic", type: "optimization" }, { target: "divide_conquer", type: "prerequisite" }] },
+
+            // 추가 Math Stream
+            { id: "prime_factorization", name: "소인수분해", tier: 2, stream: "math", x: 1700, y: 250,
+                tags: ["factorization"], description: "수를 소인수로 분해합니다.",
+                problems: [{ name: "BOJ 11653: 소인수분해", url: "https://www.acmicpc.net/problem/11653" }],
+                relations: [{ target: "prime_sieve", type: "prerequisite" }] },
+            
+            { id: "exponentiation", name: "분할 정복 거듭제곱", tier: 3, stream: "math", x: 1500, y: 400,
+                tags: ["exponentiation"], description: "거듭제곱을 O(log N)에 계산합니다.",
+                problems: [{ name: "BOJ 1629: 곱셈", url: "https://www.acmicpc.net/problem/1629" }],
+                relations: [{ target: "modular_arithmetic", type: "prerequisite" }] },
+            
+            { id: "matrix_multiply", name: "행렬 곱셈", tier: 3, stream: "math", x: 1700, y: 400,
+                tags: ["matrix"], description: "행렬의 곱셈 연산입니다.",
+                problems: [{ name: "BOJ 2740: 행렬 곱셈", url: "https://www.acmicpc.net/problem/2740" }],
+                relations: [{ target: "arithmetic", type: "prerequisite" }] },
+            
+            { id: "game_theory", name: "게임 이론", tier: 4, stream: "math", x: 1700, y: 550,
+                tags: ["game_theory"], description: "게임의 승패를 수학적으로 분석합니다.",
+                problems: [{ name: "BOJ 9657: 돌 게임 3", url: "https://www.acmicpc.net/problem/9657" }],
+                relations: [{ target: "dp_basic", type: "related" }] },
+            
+            { id: "sprague_grundy", name: "스프라그-그런디", tier: 5, stream: "math", x: 1700, y: 700,
+                tags: ["sprague_grundy"], description: "님 게임의 일반화된 이론입니다.",
+                problems: [{ name: "BOJ 16895: 님 게임 3", url: "https://www.acmicpc.net/problem/16895" }],
+                relations: [{ target: "game_theory", type: "extension" }] },
+            
+            { id: "mobius", name: "뫼비우스 반전 공식", tier: 5, stream: "math", x: 1500, y: 700,
+                tags: ["mobius"], description: "수론 함수의 역함수를 구합니다.",
+                problems: [{ name: "BOJ 11689: GCD(n, k) = 1", url: "https://www.acmicpc.net/problem/11689" }],
+                relations: [{ target: "euler_phi", type: "related" }] },
+            
+            { id: "pollard_rho", name: "폴라드 로", tier: 5, stream: "math", x: 1800, y: 700,
+                tags: ["pollard_rho"], description: "큰 수를 빠르게 소인수분해합니다.",
+                problems: [{ name: "BOJ 4149: 큰 수 소인수분해", url: "https://www.acmicpc.net/problem/4149" }],
+                relations: [{ target: "miller_rabin", type: "prerequisite" }] },
+
+            // 추가 Geometry Stream
+            { id: "sweeping", name: "스위핑", tier: 3, stream: "geometry", x: 2000, y: 400,
+                tags: ["sweeping"], description: "선이나 평면을 이동하며 처리합니다.",
+                problems: [{ name: "BOJ 2170: 선 긋기", url: "https://www.acmicpc.net/problem/2170" }],
+                relations: [{ target: "sorting", type: "prerequisite" }] },
+            
+            { id: "polygon_area", name: "다각형의 넓이", tier: 4, stream: "geometry", x: 2200, y: 550,
+                tags: ["polygon"], description: "다각형의 넓이를 신발끈 공식으로 구합니다.",
+                problems: [{ name: "BOJ 2166: 다각형의 면적", url: "https://www.acmicpc.net/problem/2166" }],
+                relations: [{ target: "ccw", type: "prerequisite" }] },
+            
+            { id: "point_in_polygon", name: "다각형 내부 점 판정", tier: 4, stream: "geometry", x: 2000, y: 550,
+                tags: ["point_in_polygon"], description: "점이 다각형 내부에 있는지 판별합니다.",
+                problems: [{ name: "BOJ 2848: 알고스팟", url: "https://www.acmicpc.net/problem/2848" }],
+                relations: [{ target: "ccw", type: "prerequisite" }] },
+            
+            { id: "half_plane_intersection", name: "반평면 교집합", tier: 5, stream: "geometry", x: 2200, y: 700,
+                tags: ["half_plane"], description: "반평면들의 교집합을 구합니다.",
+                problems: [{ name: "BOJ 12795: 반평면 땅따먹기", url: "https://www.acmicpc.net/problem/12795" }],
+                relations: [{ target: "convex_hull", type: "related" }] },
+            
+            { id: "closest_pair", name: "가장 가까운 두 점", tier: 5, stream: "geometry", x: 2000, y: 700,
+                tags: ["closest_pair"], description: "평면상의 가장 가까운 두 점을 찾습니다.",
+                problems: [{ name: "BOJ 2261: 가장 가까운 두 점", url: "https://www.acmicpc.net/problem/2261" }],
+                relations: [{ target: "divide_conquer", type: "prerequisite" }, { target: "sweeping", type: "prerequisite" }] }
+        ];
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let currentStream = 'all';
+        let selectedNode = null;
+        
+        // 드래그 관련 변수
+        let isDragging = false;
+        let dragNode = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+        let dragDistance = 0;  // 드래그 거리 추적
+        const DRAG_THRESHOLD = 1;  // 드래그 임계값 (px)
+        
+        // Force-Directed Layout 관련 변수
+        let isSimulating = false;
+        let simulationInterval = null;
+
+        // Tier별 영역 정의 (5개 Tier)
+        const tierRegions = [
+            { tier: 1, y: 50, height: 450, color: 'rgba(102, 126, 234, 0.05)' },
+            { tier: 2, y: 500, height: 450, color: 'rgba(102, 126, 234, 0.08)' },
+            { tier: 3, y: 950, height: 450, color: 'rgba(102, 126, 234, 0.11)' },
+            { tier: 4, y: 1400, height: 450, color: 'rgba(102, 126, 234, 0.14)' },
+            { tier: 5, y: 1850, height: 450, color: 'rgba(102, 126, 234, 0.17)' }
+        ];
+
+        // 캔버스 크기 설정
+        function resizeCanvas() {
+            canvas.width = 6000;   // 4000 → 6000 (50% 증가)
+            canvas.height = 2500;  // 1800 → 2500 (약 39% 증가)
+            drawGraph();
+        }
+
+        // 노드 그리기
+        function drawNode(node, isHighlight = false) {
+            if (currentStream !== 'all' && node.stream !== currentStream) return;
+
+            ctx.save();
+            
+            // 노드 배경
+            if (isHighlight) {
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = 'rgba(102, 126, 234, 0.6)';
+            }
+            
+            const gradient = ctx.createLinearGradient(node.x, node.y, node.x + 160, node.y + 60);
+            
+            if (selectedNode === node.id) {
+                gradient.addColorStop(0, '#667eea');
+                gradient.addColorStop(1, '#764ba2');
+            } else {
+                gradient.addColorStop(0, '#f8f9fa');
+                gradient.addColorStop(1, '#e9ecef');
+            }
+            
+            ctx.fillStyle = gradient;
+            ctx.strokeStyle = selectedNode === node.id ? '#764ba2' : '#dee2e6';
+            ctx.lineWidth = 3;
+            
+            // 라운드 렉트
+            const x = node.x, y = node.y, w = 160, h = 60, r = 10;
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.arcTo(x + w, y, x + w, y + r, r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+            ctx.lineTo(x + r, y + h);
+            ctx.arcTo(x, y + h, x, y + h - r, r);
+            ctx.lineTo(x, y + r);
+            ctx.arcTo(x, y, x + r, y, r);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // 스트림 색상 바
+            ctx.fillStyle = node.stream === 'algorithm' ? '#667eea' : 
+                           node.stream === 'math' ? '#f5576c' : '#00f2fe';
+            ctx.fillRect(node.x, node.y, 5, 60);
+            
+            // 텍스트
+            ctx.fillStyle = selectedNode === node.id ? '#ffffff' : '#333333';
+            ctx.font = 'bold 14px "Segoe UI"';
+            ctx.textAlign = 'center';
+            ctx.fillText(node.name, node.x + 80, node.y + 30);
+            
+            ctx.font = '11px "Segoe UI"';
+            ctx.fillStyle = selectedNode === node.id ? 'rgba(255,255,255,0.8)' : '#666666';
+            ctx.fillText(`Tier ${node.tier}`, node.x + 80, node.y + 48);
+            
+            ctx.restore();
+        }
+
+        // 화살표 그리기
+        function drawArrow(fromNode, toNode, type) {
+            if (currentStream !== 'all' && 
+                (fromNode.stream !== currentStream || toNode.stream !== currentStream)) return;
+
+            // toNode의 아래쪽 중앙에서 시작 (방향 반대로)
+            const startX = toNode.x + 80;    // 노드 가로 중앙 (160의 절반)
+            const startY = toNode.y + 60;    // 노드 아래쪽
+            
+            // fromNode의 위쪽 중앙으로 끝 (방향 반대로)
+            const endX = fromNode.x + 80;    // 노드 가로 중앙
+            const endY = fromNode.y;         // 노드 위쪽
+
+            ctx.save();
+            
+            // 선 스타일 설정
+            switch(type) {
+                case 'prerequisite':
+                    ctx.strokeStyle = '#4CAF50';
+                    ctx.lineWidth = 3;
+                    break;
+                case 'extension':
+                    ctx.strokeStyle = '#FF9800';
+                    ctx.lineWidth = 3;
+                    break;
+                case 'related':
+                    ctx.strokeStyle = '#2196F3';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    break;
+                case 'optimization':
+                    ctx.strokeStyle = '#E91E63';
+                    ctx.lineWidth = 3;
+                    break;
+                default:
+                    ctx.strokeStyle = '#999999';
+                    ctx.lineWidth = 2;
+            }
+
+            // 베지어 곡선 제어점 계산 (더 부드러운 곡선을 위해)
+            const dx = endX - startX;
+            const dy = endY - startY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // 수직 거리에 따라 곡률 조정
+            const curvature = Math.min(distance * 0.3, 100);
+            
+            const controlX1 = startX;
+            const controlY1 = startY + curvature;
+            const controlX2 = endX;
+            const controlY2 = endY - curvature;
+            
+            // 베지어 곡선으로 부드러운 선 그리기
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.bezierCurveTo(controlX1, controlY1, controlX2, controlY2, endX, endY);
+            ctx.stroke();
+
+            // 화살표 머리 (끝점에서의 각도 계산)
+            const angle = Math.atan2(endY - controlY2, endX - controlX2);
+            const arrowLength = 12;
+            
+            ctx.setLineDash([]); // 화살표는 실선으로
+            ctx.beginPath();
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(
+                endX - arrowLength * Math.cos(angle - Math.PI / 6),
+                endY - arrowLength * Math.sin(angle - Math.PI / 6)
+            );
+            ctx.lineTo(
+                endX - arrowLength * Math.cos(angle + Math.PI / 6),
+                endY - arrowLength * Math.sin(angle + Math.PI / 6)
+            );
+            ctx.closePath();
+            ctx.fillStyle = ctx.strokeStyle;
+            ctx.fill();
+            
+            ctx.restore();
+        }
+
+        // Tier 영역 배경 그리기
+        function drawTierRegions() {
+            tierRegions.forEach(region => {
+                ctx.fillStyle = region.color;
+                ctx.fillRect(0, region.y, canvas.width, region.height);
+                
+                // Tier 라벨
+                ctx.save();
+                ctx.fillStyle = 'rgba(102, 126, 234, 0.3)';
+                ctx.font = 'bold 24px "Segoe UI"';
+                ctx.fillText(`Tier ${region.tier}`, 20, region.y + 30);
+                ctx.restore();
+                
+                // 구분선
+                ctx.strokeStyle = 'rgba(102, 126, 234, 0.2)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, region.y);
+                ctx.lineTo(canvas.width, region.y);
+                ctx.stroke();
+            });
+        }
+
+        // 그래프 그리기
+        function drawGraph() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 1단계: Tier 영역 배경 그리기
+            drawTierRegions();
+            
+            // 2단계: 배경 그리드 (선택사항)
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.width; i += 100) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i < canvas.height; i += 100) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+
+            // 3단계: 모든 연결선 그리기
+            algorithmData.forEach(node => {
+                if (node.relations) {
+                    node.relations.forEach(relation => {
+                        const targetNode = algorithmData.find(n => n.id === relation.target);
+                        if (targetNode) {
+                            drawArrow(node, targetNode, relation.type);
+                        }
+                    });
+                }
+            });
+
+            // 4단계: 모든 노드 그리기
+            algorithmData.forEach(node => {
+                drawNode(node, selectedNode === node.id);
+            });
+        }
+
+        // 노드 클릭 및 드래그 시작
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            let clickedNode = null;
+            algorithmData.forEach(node => {
+                if (currentStream !== 'all' && node.stream !== currentStream) return;
+                
+                if (x >= node.x && x <= node.x + 160 &&
+                    y >= node.y && y <= node.y + 60) {
+                    clickedNode = node;
+                }
+            });
+
+            if (clickedNode) {
+                isDragging = true;
+                dragNode = clickedNode;
+                dragOffsetX = x - clickedNode.x;
+                dragOffsetY = y - clickedNode.y;
+                dragDistance = 0;  // 드래그 거리 초기화
+                canvas.style.cursor = 'grabbing';
+            }
+        });
+
+        // 드래그 중
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (isDragging && dragNode) {
+                // 드래그 거리 계산
+                const dx = x - (dragNode.x + dragOffsetX);
+                const dy = y - (dragNode.y + dragOffsetY);
+                dragDistance = Math.sqrt(dx * dx + dy * dy);
+                
+                // 자동 배치 중지
+                if (isSimulating) {
+                    stopForceLayout();
+                }
+                
+                // 노드 위치 업데이트
+                dragNode.x = x - dragOffsetX;
+                dragNode.y = y - dragOffsetY;
+                
+                // 캔버스 범위 제한
+                dragNode.x = Math.max(0, Math.min(dragNode.x, canvas.width - 160));
+                dragNode.y = Math.max(0, Math.min(dragNode.y, canvas.height - 60));
+                
+                // 속도 초기화 (Force-Directed 영향 제거)
+                dragNode.vx = 0;
+                dragNode.vy = 0;
+                
+                drawGraph();
+            } else {
+                // 호버 효과
+                let hoverNode = false;
+                algorithmData.forEach(node => {
+                    if (currentStream !== 'all' && node.stream !== currentStream) return;
+                    
+                    if (x >= node.x && x <= node.x + 160 &&
+                        y >= node.y && y <= node.y + 60) {
+                        hoverNode = true;
+                    }
+                });
+
+                canvas.style.cursor = hoverNode ? 'grab' : 'default';
+            }
+        });
+
+        // 드래그 종료
+        canvas.addEventListener('mouseup', (e) => {
+            if (isDragging && dragNode) {
+                isDragging = false;
+                dragNode = null;
+                canvas.style.cursor = 'grab';
+            }
+        });
+
+        // 캔버스 밖으로 나갈 때도 드래그 종료
+        canvas.addEventListener('mouseleave', (e) => {
+            if (isDragging) {
+                isDragging = false;
+                dragNode = null;
+                canvas.style.cursor = 'default';
+            }
+        });
+
+        // 노드 클릭 (드래그하지 않은 경우만)
+        canvas.addEventListener('click', (e) => {
+            // 실제 드래그가 발생했으면 클릭 이벤트 무시
+            if (dragDistance > DRAG_THRESHOLD) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            let clickedNode = null;
+            algorithmData.forEach(node => {
+                if (currentStream !== 'all' && node.stream !== currentStream) return;
+                
+                if (x >= node.x && x <= node.x + 160 &&
+                    y >= node.y && y <= node.y + 60) {
+                    clickedNode = node;
+                }
+            });
+
+            if (clickedNode) {
+                selectedNode = selectedNode === clickedNode.id ? null : clickedNode.id;
+                drawGraph();
+                if (selectedNode) {
+                    showModal(clickedNode);
+                }
+            }
+        });
+
+        // Force-Directed Layout 알고리즘
+        function applyForceDirectedLayout() {
+            const repulsionStrength = 15000;  // 노드 간 반발력 (더 증가)
+            const attractionStrength = 0.005; // 연결된 노드 간 인력 (감소)
+            const dampening = 0.85;           // 감쇠 계수
+            const minDistance = 250;          // 최소 거리 (증가)
+            const centeringForce = 0.05;      // Tier 중앙으로 끌어당기는 힘
+            const nodeWidth = 160;
+            const nodeHeight = 60;
+            const margin = 40;                // 노드 간 최소 간격 (증가: 25 → 40)
+            
+            algorithmData.forEach(node => {
+                if (!node.vx) node.vx = 0;
+                if (!node.vy) node.vy = 0;
+            });
+
+            // 1. 모든 노드 쌍에 대해 반발력 적용 (겹침 방지 강화)
+            for (let i = 0; i < algorithmData.length; i++) {
+                for (let j = i + 1; j < algorithmData.length; j++) {
+                    const nodeA = algorithmData[i];
+                    const nodeB = algorithmData[j];
+                    
+                    if (currentStream !== 'all' && 
+                        (nodeA.stream !== currentStream || nodeB.stream !== currentStream)) continue;
+
+                    const dx = nodeB.x - nodeA.x;
+                    const dy = nodeB.y - nodeA.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+                    
+                    // 실제 노드 크기를 고려한 겹침 검사 (더 넉넉한 간격)
+                    const actualMinDistance = Math.sqrt(
+                        Math.pow(nodeWidth + margin * 2, 2) + 
+                        Math.pow(nodeHeight + margin * 2, 2)
+                    );
+                    
+                    // 노드가 너무 가까우면 매우 강한 반발력
+                    if (distance < actualMinDistance) {
+                        const force = repulsionStrength / (distance * distance);
+                        const fx = (dx / distance) * force;
+                        const fy = (dy / distance) * force;
+                        
+                        nodeA.vx -= fx;
+                        nodeA.vy -= fy;
+                        nodeB.vx += fx;
+                        nodeB.vy += fy;
+                    } else if (distance < minDistance) {
+                        // 일반적인 반발력
+                        const force = repulsionStrength / (distance * distance * 2);
+                        const fx = (dx / distance) * force;
+                        const fy = (dy / distance) * force;
+                        
+                        nodeA.vx -= fx;
+                        nodeA.vy -= fy;
+                        nodeB.vx += fx;
+                        nodeB.vy += fy;
+                    }
+                }
+            }
+
+            // 2. 연결된 노드 간 인력 적용
+            algorithmData.forEach(node => {
+                if (node.relations) {
+                    node.relations.forEach(relation => {
+                        const targetNode = algorithmData.find(n => n.id === relation.target);
+                        if (targetNode) {
+                            if (currentStream !== 'all' && 
+                                (node.stream !== currentStream || targetNode.stream !== currentStream)) return;
+
+                            const dx = targetNode.x - node.x;
+                            const dy = targetNode.y - node.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+                            
+                            const force = distance * attractionStrength;
+                            const fx = (dx / distance) * force;
+                            const fy = (dy / distance) * force;
+                            
+                            node.vx += fx;
+                            node.vy += fy;
+                            targetNode.vx -= fx;
+                            targetNode.vy -= fy;
+                        }
+                    });
+                }
+            });
+
+            // 3. Tier 중앙으로 끌어당기는 힘
+            algorithmData.forEach(node => {
+                if (currentStream !== 'all' && node.stream !== currentStream) return;
+
+                const tierRegion = tierRegions.find(r => r.tier === node.tier);
+                if (tierRegion) {
+                    // Tier의 세로 중앙
+                    const tierCenterY = tierRegion.y + tierRegion.height / 2;
+                    const dy = tierCenterY - node.y;
+                    
+                    // 중앙으로 부드럽게 끌어당김
+                    node.vy += dy * centeringForce;
+                }
+            });
+
+            // 4. 위치 업데이트 및 경계 제한
+            algorithmData.forEach(node => {
+                if (currentStream !== 'all' && node.stream !== currentStream) return;
+
+                node.x += node.vx;
+                node.y += node.vy;
+                
+                // 캔버스 경계 제한
+                node.x = Math.max(20, Math.min(node.x, canvas.width - nodeWidth - 20));
+                
+                // Tier별 Y 좌표 제한 (영역 내부로 제한)
+                const tierRegion = tierRegions.find(r => r.tier === node.tier);
+                if (tierRegion) {
+                    node.y = Math.max(tierRegion.y + 10, 
+                                     Math.min(node.y, tierRegion.y + tierRegion.height - nodeHeight - 10));
+                }
+                
+                // 속도 감쇠
+                node.vx *= dampening;
+                node.vy *= dampening;
+            });
+
+            // 5. 겹침 해소 (추가 안전 장치) - 더 강화된 버전
+            resolveOverlaps();
+        }
+
+        // 겹침 해소 함수 (강화 버전)
+        function resolveOverlaps() {
+            const nodeWidth = 160;
+            const nodeHeight = 60;
+            const margin = 50; // 여유 공간 증가 (25 → 50)
+            
+            // 더 많은 반복으로 완벽한 분리 보장
+            for (let iteration = 0; iteration < 5; iteration++) {
+                for (let i = 0; i < algorithmData.length; i++) {
+                    for (let j = i + 1; j < algorithmData.length; j++) {
+                        const nodeA = algorithmData[i];
+                        const nodeB = algorithmData[j];
+                        
+                        if (currentStream !== 'all' && 
+                            (nodeA.stream !== currentStream || nodeB.stream !== currentStream)) continue;
+
+                        // 같은 Tier인 경우만 체크 (다른 Tier는 Y축이 다르므로 겹칠 염려 없음)
+                        if (nodeA.tier !== nodeB.tier) continue;
+
+                        // AABB (Axis-Aligned Bounding Box) 충돌 검사
+                        const overlapX = (nodeA.x < nodeB.x + nodeWidth + margin) && 
+                                        (nodeA.x + nodeWidth + margin > nodeB.x);
+                        const overlapY = (nodeA.y < nodeB.y + nodeHeight + margin) && 
+                                        (nodeA.y + nodeHeight + margin > nodeB.y);
+                        
+                        if (overlapX && overlapY) {
+                            // 겹침 발생 - 밀어내기
+                            const centerAX = nodeA.x + nodeWidth / 2;
+                            const centerAY = nodeA.y + nodeHeight / 2;
+                            const centerBX = nodeB.x + nodeWidth / 2;
+                            const centerBY = nodeB.y + nodeHeight / 2;
+                            
+                            const dx = centerBX - centerAX;
+                            const dy = centerBY - centerAY;
+                            const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+                            
+                            // 겹친 정도 계산
+                            const overlapAmount = (nodeWidth + margin) - Math.abs(dx);
+                            const pushDistance = overlapAmount / 2 + 10; // 추가 여유 공간
+                            
+                            // X축으로 밀어내기 (우선)
+                            if (Math.abs(dx) > Math.abs(dy)) {
+                                const direction = dx > 0 ? 1 : -1;
+                                nodeA.x -= direction * pushDistance;
+                                nodeB.x += direction * pushDistance;
+                            } else {
+                                // Y축으로 밀어내기 (Tier 내부에서만)
+                                const direction = dy > 0 ? 1 : -1;
+                                const tierRegionA = tierRegions.find(r => r.tier === nodeA.tier);
+                                
+                                if (tierRegionA) {
+                                    const newAY = nodeA.y - direction * pushDistance;
+                                    const newBY = nodeB.y + direction * pushDistance;
+                                    
+                                    // Tier 경계 내에서만 이동
+                                    if (newAY >= tierRegionA.y + 10 && 
+                                        newAY <= tierRegionA.y + tierRegionA.height - nodeHeight - 10) {
+                                        nodeA.y = newAY;
+                                    }
+                                    if (newBY >= tierRegionA.y + 10 && 
+                                        newBY <= tierRegionA.y + tierRegionA.height - nodeHeight - 10) {
+                                        nodeB.y = newBY;
+                                    }
+                                }
+                            }
+                            
+                            // 캔버스 경계 재확인
+                            nodeA.x = Math.max(20, Math.min(nodeA.x, canvas.width - nodeWidth - 20));
+                            nodeB.x = Math.max(20, Math.min(nodeB.x, canvas.width - nodeWidth - 20));
+                        }
+                    }
+                }
+            }
+        }
+
+        // Force-Directed Layout 시작
+        function startForceLayout() {
+            if (isSimulating) {
+                stopForceLayout();
+                return;
+            }
+            
+            isSimulating = true;
+            const btn = document.getElementById('btnForceLayout');
+            if (btn) btn.textContent = '자동 배치 중...';
+            
+            let iterations = 0;
+            const maxIterations = 500;
+            const maxDuration = 2000; // 2초 (밀리초)
+            const startTime = Date.now();
+            
+            simulationInterval = setInterval(() => {
+                applyForceDirectedLayout();
+                drawGraph();
+                
+                iterations++;
+                const elapsed = Date.now() - startTime;
+                
+                // 2초 경과 시 자동 중지
+                if (elapsed >= maxDuration) {
+                    stopForceLayout();
+                    return;
+                }
+                
+                // 최대 반복 횟수 도달 시 중지
+                if (iterations >= maxIterations) {
+                    stopForceLayout();
+                    return;
+                }
+                
+                // 속도가 충분히 작아지면 중지
+                const totalVelocity = algorithmData.reduce((sum, node) => {
+                    if (currentStream !== 'all' && node.stream !== currentStream) return sum;
+                    return sum + Math.abs(node.vx) + Math.abs(node.vy);
+                }, 0);
+                
+                if (totalVelocity < 0.5) {
+                    stopForceLayout();
+                }
+            }, 16); // ~60 FPS
+        }
+
+        // Force-Directed Layout 중지
+        function stopForceLayout() {
+            isSimulating = false;
+            if (simulationInterval) {
+                clearInterval(simulationInterval);
+                simulationInterval = null;
+            }
+            const btn = document.getElementById('btnForceLayout');
+            if (btn) btn.textContent = '자동 배치 시작';
+        }
+
+        // 기본 배치 데이터 (algorithm_layout_2025-10-17.json에서 복사)
+        const DEFAULT_LAYOUT = [
+  {"id": "array_list", "x": 1120.5217757590472, "y": 289},
+  {"id": "stack_queue", "x": 542.1365655571078, "y": 159.1076625255298},
+  {"id": "hash_set", "x": 218.90653599404624, "y": 140.90800384783603},
+  {"id": "sorting", "x": 2184.4422324389598, "y": 356},
+  {"id": "recursion", "x": 3029.4422324389598, "y": 305},
+  {"id": "bruteforce", "x": 3712.3626891188724, "y": 353.00745827087786},
+  {"id": "binary_search", "x": 2054.898122977818, "y": 768.7447874746696},
+  {"id": "two_pointer", "x": 323.0123687443892, "y": 559.4844130029579},
+  {"id": "prefix_sum", "x": 642.6735262019263, "y": 533.4288261101046},
+  {"id": "greedy", "x": 1827.17575271639, "y": 554.940330293139},
+  {"id": "priority_queue", "x": 1475.9882919283964, "y": 531.2453199806619},
+  {"id": "graph_basic", "x": 973.8316351723024, "y": 654.718533349995},
+  {"id": "backtracking", "x": 3406.7696714802264, "y": 550.3424717994598},
+  {"id": "dfs_bfs", "x": 515.8105785998093, "y": 1001.5986431098004},
+  {"id": "dijkstra", "x": 1344.7002164380153, "y": 1039.8387487292925},
+  {"id": "dp_basic", "x": 2547.4507334504624, "y": 976.6405253774019},
+  {"id": "divide_conquer", "x": 3326.5569936546776, "y": 975.855072727597},
+  {"id": "union_find", "x": 1014.8105785998093, "y": 1119.2585633459926},
+  {"id": "meet_in_the_middle", "x": 3622.6213896139784, "y": 1015.9569157070534},
+  {"id": "segment_tree", "x": 3194.517202176512, "y": 1458.7908308381632},
+  {"id": "trie", "x": 2763.4955306070688, "y": 1412.0255960699503},
+  {"id": "topological_sort", "x": 152.5825855435735, "y": 1463.7743490426258},
+  {"id": "mst", "x": 856.5825855435735, "y": 1537.9244327198796},
+  {"id": "lca", "x": 341.30470710496047, "y": 1707.8144517168953},
+  {"id": "scc", "x": 672.9852672365801, "y": 1652.1841143905256},
+  {"id": "kmp", "x": 1099.476155949279, "y": 1467.6641322488103},
+  {"id": "bitmask_dp", "x": 2265.7729237895437, "y": 1505.981018482381},
+  {"id": "lazy_propagation", "x": 3330.160487106107, "y": 2077.037230043804},
+  {"id": "mos_algorithm", "x": 3007.585598124444, "y": 2153.4197424556774},
+  {"id": "max_flow", "x": 151.613362257095, "y": 1887.9200632380334},
+  {"id": "aho_corasick", "x": 1286.0393173182501, "y": 1917.2304616088638},
+  {"id": "convex_hull_trick", "x": 2537.9961128841824, "y": 2025.3309138087766},
+  {"id": "gcd_lcm", "x": 4056.8637313580352, "y": 359.7035557099791},
+  {"id": "prime_sieve", "x": 4428.120578901389, "y": 379},
+  {"id": "modular_arithmetic", "x": 1586.9546646010754, "y": 633.7172645690379},
+  {"id": "combinatorics", "x": 1685.8981229778178, "y": 835.5050508143136},
+  {"id": "extended_euclidean", "x": 3821.0774959330047, "y": 1008.1466360553529},
+  {"id": "chinese_remainder", "x": 4177.2424934067785, "y": 976.7176979303094},
+  {"id": "euler_phi", "x": 4297.125964978033, "y": 1572.0501752722203},
+  {"id": "inclusion_exclusion", "x": 1684.6696404800784, "y": 1465.9347230344144},
+  {"id": "fft", "x": 3664.9766894575864, "y": 1886.9708444787993},
+  {"id": "miller_rabin", "x": 4456.216358666794, "y": 1896.2229466601138},
+  {"id": "geometry_basics", "x": 4791.1325135235365, "y": 1002.1775898779119},
+  {"id": "ccw", "x": 4792.366004379926, "y": 1169.464991469556},
+  {"id": "line_intersection", "x": 4574.794902327258, "y": 1623.3167168396258},
+  {"id": "convex_hull", "x": 3916.960861684378, "y": 1619.4163523053573},
+  {"id": "rotating_calipers", "x": 3770.743236673169, "y": 1995.8141481844295},
+  {"id": "implementation", "x": 4661.635629026799, "y": 340.22243332064266},
+  {"id": "arithmetic", "x": 4890.6252243006475, "y": 345.65255888044067},
+  {"id": "simulation", "x": 4633.063524954779, "y": 699.7298124201398},
+  {"id": "sliding_window", "x": 318.5510510320564, "y": 789.9855173345458},
+  {"id": "parametric_search", "x": 1935.147437463038, "y": 881.5637212468322},
+  {"id": "linked_list", "x": 835.4651811073672, "y": 535.4482717633022},
+  {"id": "floyd_warshall", "x": 200.74253877158577, "y": 1013.8493772499821},
+  {"id": "bellman_ford", "x": 1446.7425387715857, "y": 1216.3220751481088},
+  {"id": "knapsack", "x": 2690.0774959330042, "y": 1152.550628594927},
+  {"id": "lis", "x": 2317.53360225203, "y": 1015.2889372995901},
+  {"id": "dag", "x": 746.8051182984236, "y": 999.6154997885371},
+  {"id": "fenwick_tree", "x": 3406.9033442569716, "y": 1659.660804348836},
+  {"id": "sqrt_decomposition", "x": 1283.050686066675, "y": 1463.819103670485},
+  {"id": "bipartite_matching", "x": 527.1259649780336, "y": 1472.190767677616},
+  {"id": "two_sat", "x": 904.2102732167418, "y": 1759.6602689998722},
+  {"id": "tree_dp", "x": 1480.2102732167418, "y": 1466.9846511306746},
+  {"id": "sparse_table", "x": 3444.7575513975, "y": 1543.0888460705667},
+  {"id": "articulation", "x": 748.4501569381, "y": 1437.6070106264963},
+  {"id": "mcmf", "x": 218.64454048305447, "y": 2152.3033618669906},
+  {"id": "suffix_array", "x": 2135.798527008167, "y": 1893.678774771996},
+  {"id": "hld", "x": 953.6445404830545, "y": 2187.5217398414084},
+  {"id": "persistent_seg", "x": 3417.3967396358976, "y": 1908.6310211842078},
+  {"id": "splay_tree", "x": 3190.0287149259557, "y": 1972.2370765899623},
+  {"id": "parallel_binary_search", "x": 1834.8317762014349, "y": 2012.079971523188},
+  {"id": "manacher", "x": 1054.434277935382, "y": 1946.4096418966478},
+  {"id": "dnc_optimization", "x": 2724.605349620199, "y": 1943.450224660919},
+  {"id": "prime_factorization", "x": 4534.769671480226, "y": 552.6021180656337},
+  {"id": "exponentiation", "x": 1529.6022271323782, "y": 1047.398539667353},
+  {"id": "matrix_multiply", "x": 5030.341323354844, "y": 991.9797354762179},
+  {"id": "game_theory", "x": 2434.801773017967, "y": 1445.5348024018854},
+  {"id": "sprague_grundy", "x": 2335.798527008167, "y": 1996.3463456746736},
+  {"id": "mobius", "x": 4272.216358666794, "y": 1892.7356852479613},
+  {"id": "pollard_rho", "x": 4489.028714925956, "y": 2076.949606185582},
+  {"id": "sweeping", "x": 1797.0101372818363, "y": 985.883793660531},
+  {"id": "polygon_area", "x": 4776.794902327258, "y": 1617.3946200596447},
+  {"id": "point_in_polygon", "x": 4976.8701236071265, "y": 1611.5568630550201},
+  {"id": "half_plane_intersection", "x": 4074.70976909449, "y": 2008.799434442758},
+  {"id": "closest_pair", "x": 2051.840533649835, "y": 2155.375756515554}
+        ];
+
+        // 기본 배치 데이터 동적 로드 및 적용
+        // 기본 배치 데이터 로드 및 적용 (JSON 기반)
+        async function applyDefaultLayout() {
+            try {
+                // 먼저 하드코딩된 DEFAULT_LAYOUT을 사용
+                DEFAULT_LAYOUT.forEach(layoutItem => {
+                    const node = algorithmData.find(n => n.id === layoutItem.id);
+                    if (node) {
+                        node.x = layoutItem.x;
+                        node.y = layoutItem.y;
+                        node.vx = 0;
+                        node.vy = 0;
+                    }
+                });
+                
+                console.log('✓ 기본 배치가 적용되었습니다. (' + DEFAULT_LAYOUT.length + '개 항목)');
+                drawGraph();
+                
+            } catch (error) {
+                console.warn('기본 배치 적용 오류:', error.message);
+                console.log('→ Tier별 정렬로 대체합니다.');
+                resetToTierLayout();
+            }
+        }
+
+        // Tier별 초기 위치 설정
+        function resetToTierLayout() {
+            const streamGroups = {
+                algorithm: [],
+                math: [],
+                geometry: []
+            };
+            
+            // 스트림별로 그룹화
+            algorithmData.forEach(node => {
+                streamGroups[node.stream].push(node);
+            });
+            
+            // 각 스트림별로 X 오프셋 설정
+            const streamOffsets = {
+                algorithm: 100,
+                math: 1400,
+                geometry: 2400
+            };
+            
+            Object.keys(streamGroups).forEach(stream => {
+                const nodes = streamGroups[stream];
+                const baseX = streamOffsets[stream];
+                
+                // Tier별로 분류
+                for (let tier = 1; tier <= 5; tier++) {
+                    const tierNodes = nodes.filter(n => n.tier === tier);
+                    const tierRegion = tierRegions.find(r => r.tier === tier);
+                    
+                    if (!tierRegion) continue;
+                    
+                    // X 좌표 균등 분배
+                    tierNodes.forEach((node, index) => {
+                        node.x = baseX + (index * 220);
+                        node.y = tierRegion.y + 130;
+                        node.vx = 0;
+                        node.vy = 0;
+                    });
+                }
+            });
+            
+            drawGraph();
+        }
+        function showStream(stream) {
+            currentStream = stream;
+            selectedNode = null;
+            document.querySelectorAll('.controls button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn' + stream.charAt(0).toUpperCase() + stream.slice(1)).classList.add('active');
+            drawGraph();
+        }
+
+        function showAllStreams() {
+            currentStream = 'all';
+            selectedNode = null;
+            document.querySelectorAll('.controls button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btnAll').classList.add('active');
+            drawGraph();
+        }
+
+        function resetView() {
+            selectedNode = null;
+            stopForceLayout();
+            drawGraph();
+        }
+
+        // 현재 배치 정보 내보내기
+        function exportLayout() {
+            const layoutData = algorithmData.map(node => ({
+                id: node.id,
+                x: node.x,
+                y: node.y
+            }));
+            
+            const json = JSON.stringify(layoutData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            // 다운로드 링크 생성
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `algorithm_layout_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('배치 정보가 저장되었습니다!\n파일명: ' + a.download);
+        }
+
+        // 배치 정보 로드하기
+        function importLayout() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const layoutData = JSON.parse(event.target.result);
+                        
+                        // 각 노드의 위치 업데이트
+                        layoutData.forEach(item => {
+                            const node = algorithmData.find(n => n.id === item.id);
+                            if (node) {
+                                node.x = item.x;
+                                node.y = item.y;
+                                node.vx = 0;
+                                node.vy = 0;
+                            }
+                        });
+                        
+                        drawGraph();
+                        alert('배치가 로드되었습니다!');
+                    } catch (error) {
+                        alert('배치 로드 실패:\n' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            document.body.appendChild(input);
+            input.click();
+            document.body.removeChild(input);
+        }
+
+        // 배치 정보를 콘솔에 출력 (복사 용도)
+        function printLayoutToConsole() {
+            const layoutData = algorithmData.map(node => ({
+                id: node.id,
+                x: node.x,
+                y: node.y
+            }));
+            
+            console.log(JSON.stringify(layoutData, null, 2));
+            console.log('\n=== 위의 JSON을 복사하여 저장하세요 ===');
+        }
+
+        // 모달 표시
+        function showModal(node) {
+            const modal = document.getElementById('modal');
+            document.getElementById('modalTitle').textContent = node.name;
+            document.getElementById('modalDescription').textContent = node.description;
+
+            const tagsDiv = document.getElementById('modalTags');
+            tagsDiv.innerHTML = '';
+            node.tags.forEach(tag => {
+                const tagSpan = document.createElement('span');
+                tagSpan.className = 'tag';
+                tagSpan.textContent = tag;
+                tagsDiv.appendChild(tagSpan);
+            });
+
+            const problemsList = document.getElementById('modalProblems');
+            problemsList.innerHTML = '';
+            if (node.problems && node.problems.length > 0) {
+                node.problems.forEach(problem => {
+                    const li = document.createElement('li');
+                    li.className = 'problem-item';
+                    const a = document.createElement('a');
+                    a.href = problem.url;
+                    a.target = '_blank';
+                    a.textContent = problem.name;
+                    li.appendChild(a);
+                    problemsList.appendChild(li);
+                });
+            } else {
+                problemsList.innerHTML = '<li class="problem-item">추천 문제가 없습니다.</li>';
+            }
+
+            const relationsDiv = document.getElementById('modalRelations');
+            const relationsSection = document.getElementById('relationsSection');
+            relationsDiv.innerHTML = '';
+            
+            if (node.relations && node.relations.length > 0) {
+                relationsSection.style.display = 'block';
+                node.relations.forEach(relation => {
+                    const targetNode = algorithmData.find(n => n.id === relation.target);
+                    if (targetNode) {
+                        const li = document.createElement('li');
+                        li.className = 'relation-item';
+                        
+                        let relationText = '';
+                        switch(relation.type) {
+                            case 'prerequisite':
+                                relationText = `→ 선행 필요: ${targetNode.name}`;
+                                break;
+                            case 'extension':
+                                relationText = `⇢ 확장: ${targetNode.name}`;
+                                break;
+                            case 'optimization':
+                                relationText = `⚡ 최적화: ${targetNode.name}`;
+                                break;
+                            case 'related':
+                                relationText = `🔗 관련: ${targetNode.name}`;
+                                break;
+                            default:
+                                relationText = `• ${targetNode.name}`;
+                        }
+                        
+                        li.textContent = relationText;
+                        li.style.cursor = 'pointer';
+                        li.onclick = () => {
+                            closeModal();
+                            selectedNode = targetNode.id;
+                            drawGraph();
+                            showModal(targetNode);
+                        };
+                        relationsDiv.appendChild(li);
+                    }
+                });
+            } else {
+                relationsSection.style.display = 'none';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target.id === 'modal') {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // 초기화
+        window.addEventListener('load', async () => {
+            resizeCanvas();
+            await applyDefaultLayout();  // 기본 배치 적용 (비동기 처리)
+        });
+        window.addEventListener('resize', resizeCanvas);
+    </script>
+</body>
+</html>
